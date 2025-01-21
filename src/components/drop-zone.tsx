@@ -2,35 +2,92 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Cloud, File } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface DropZoneProps {
-  onFileAccepted: (file: File) => void;
+  onFileAccepted: (recording: {
+    id: string;
+    name: string;
+    duration: string;
+    status: "processing" | "completed";
+    transcript?: string;
+  }) => void;
+  projectId: string;
 }
 
-export function DropZone({ onFileAccepted }: DropZoneProps) {
+export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const { toast } = useToast();
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
-    if (file) {
-      // Simulate upload progress
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        setUploadProgress(progress);
-        if (progress === 100) {
-          clearInterval(interval);
-          onFileAccepted(file);
-          setTimeout(() => setUploadProgress(0), 500);
-        }
-      }, 100);
+    if (!file) return;
+
+    try {
+      setUploadProgress(10);
+      
+      // Upload to Supabase Storage
+      const filePath = `${projectId}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('audio')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+      setUploadProgress(50);
+
+      // Create recording record
+      const { data: recording, error: dbError } = await supabase
+        .from('recordings')
+        .insert({
+          project_id: projectId,
+          file_path: filePath,
+          status: 'processing'
+        })
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+      setUploadProgress(75);
+
+      // Start transcription
+      const { error: transcriptionError } = await supabase.functions
+        .invoke('transcribe-audio', {
+          body: { recordingId: recording.id }
+        });
+
+      if (transcriptionError) throw transcriptionError;
+      setUploadProgress(100);
+
+      // Notify parent component
+      onFileAccepted({
+        id: recording.id,
+        name: file.name,
+        duration: "Processing...",
+        status: "processing"
+      });
+
+      toast({
+        title: "Recording uploaded",
+        description: "Your recording is being processed."
+      });
+
+      setTimeout(() => setUploadProgress(0), 500);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive"
+      });
+      setUploadProgress(0);
     }
-  }, [onFileAccepted]);
+  }, [projectId, onFileAccepted, toast]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'audio/*': ['.mp3', '.wav', '.m4a']
+      'audio/*': ['.mp3', '.wav', '.m4a', '.flac']
     },
     maxFiles: 1
   });
@@ -55,7 +112,7 @@ export function DropZone({ onFileAccepted }: DropZoneProps) {
               Drag and drop your audio recording here, or click to select
             </p>
             <p className="text-xs text-gray-400">
-              Supports MP3, WAV, M4A
+              Supports MP3, WAV, M4A, FLAC
             </p>
           </>
         )}
