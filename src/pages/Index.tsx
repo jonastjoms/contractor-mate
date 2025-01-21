@@ -5,7 +5,7 @@ import { ProjectCard } from "@/components/project-card";
 import { Plus, Search, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Project {
@@ -45,12 +45,20 @@ export default function Index() {
 
   const createProject = useMutation({
     mutationFn: async () => {
+      // Get the current user's ID
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error(userError?.message || "User not authenticated");
+      }
+
       const { data, error } = await supabase
         .from('projects')
         .insert([
           {
             title: 'New Project',
             description: 'Click to edit project details',
+            user_id: user.id, // Add the user_id field
           },
         ])
         .select()
