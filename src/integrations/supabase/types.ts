@@ -150,6 +150,7 @@ export type Database = {
           file_path: string
           id: string
           project_id: string
+          status: string
           transcript: string | null
           updated_at: string
         }
@@ -158,6 +159,7 @@ export type Database = {
           file_path: string
           id?: string
           project_id: string
+          status?: string
           transcript?: string | null
           updated_at?: string
         }
@@ -166,6 +168,7 @@ export type Database = {
           file_path?: string
           id?: string
           project_id?: string
+          status?: string
           transcript?: string | null
           updated_at?: string
         }

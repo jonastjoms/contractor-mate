@@ -5,6 +5,7 @@ import { RecordingList } from "@/components/recording-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Recording {
   id: string;
@@ -20,35 +21,66 @@ export default function Project() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
 
   const handleFileAccepted = async (file: File) => {
-    const newRecording: Recording = {
-      id: Date.now().toString(),
-      name: file.name,
-      duration: "0:00",
-      status: "processing"
-    };
+    try {
+      // Upload file to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${crypto.randomUUID()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('audio')
+        .upload(filePath, file);
 
-    setRecordings(prev => [newRecording, ...prev]);
+      if (uploadError) {
+        throw uploadError;
+      }
 
-    // Simulate processing delay
-    setTimeout(() => {
-      setRecordings(prev =>
-        prev.map(rec =>
-          rec.id === newRecording.id
-            ? {
-                ...rec,
-                status: "completed",
-                transcript: "Sample transcript from the recording...",
-                duration: "1:30"
-              }
-            : rec
-        )
-      );
+      // Create recording record in the database
+      const { data: recordingData, error: recordingError } = await supabase
+        .from('recordings')
+        .insert({
+          project_id: id,
+          file_path: filePath,
+          name: file.name,
+          status: 'processing'
+        })
+        .select()
+        .single();
+
+      if (recordingError) {
+        throw recordingError;
+      }
+
+      // Add the new recording to the local state
+      const newRecording: Recording = {
+        id: recordingData.id,
+        name: file.name,
+        duration: "Processing...",
+        status: "processing"
+      };
+
+      setRecordings(prev => [newRecording, ...prev]);
+
+      // Call the transcribe function
+      const { error: transcribeError } = await supabase.functions.invoke('transcribe-audio', {
+        body: { recordingId: recordingData.id }
+      });
+
+      if (transcribeError) {
+        throw transcribeError;
+      }
 
       toast({
-        title: "Recording processed",
-        description: "Your recording has been successfully processed."
+        title: "Recording uploaded",
+        description: "Your recording is being processed."
       });
-    }, 3000);
+    } catch (error) {
+      console.error('Error handling file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload recording. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handlePlay = (id: string) => {
@@ -56,6 +88,23 @@ export default function Project() {
       title: "Playing recording",
       description: "Audio playback started."
     });
+  };
+
+  const handleUpdate = (recording: Recording) => {
+    setRecordings(prev =>
+      prev.map(rec =>
+        rec.id === recording.id
+          ? recording
+          : rec
+      )
+    );
+
+    if (recording.status === "completed") {
+      toast({
+        title: "Recording processed",
+        description: "Your recording has been successfully transcribed."
+      });
+    }
   };
 
   return (
@@ -89,6 +138,7 @@ export default function Project() {
                 <RecordingList
                   recordings={recordings}
                   onPlay={handlePlay}
+                  onUpdate={handleUpdate}
                 />
               </CardContent>
             </Card>

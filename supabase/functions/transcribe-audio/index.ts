@@ -13,38 +13,35 @@ serve(async (req) => {
 
   try {
     const { recordingId } = await req.json()
-    console.log('Processing recording:', recordingId)
 
-    const supabase = createClient(
+    // Initialize Supabase client
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
     // Get the recording details
-    const { data: recording, error: recordingError } = await supabase
+    const { data: recording, error: recordingError } = await supabaseClient
       .from('recordings')
       .select('*')
       .eq('id', recordingId)
       .single()
 
-    if (recordingError || !recording) {
-      throw new Error('Recording not found')
+    if (recordingError) {
+      throw recordingError
     }
 
-    // Get the file from storage
-    const { data: fileData, error: fileError } = await supabase
+    // Download the audio file
+    const { data: fileData, error: downloadError } = await supabaseClient
       .storage
       .from('audio')
       .download(recording.file_path)
 
-    if (fileError) {
-      throw new Error('File not found in storage')
+    if (downloadError) {
+      throw downloadError
     }
 
-    // Convert the file to a buffer
-    const buffer = await fileData.arrayBuffer()
-
-    // Call the transcription API
+    // Send the audio file to the Hugging Face API
     const response = await fetch(
       "https://kelhfabjfneinfr9.us-east-1.aws.endpoints.huggingface.cloud",
       {
@@ -54,31 +51,31 @@ serve(async (req) => {
           "Content-Type": "audio/flac"
         },
         method: "POST",
-        body: buffer,
+        body: fileData,
       }
     )
 
     if (!response.ok) {
-      throw new Error('Transcription failed')
+      throw new Error(`API request failed: ${response.statusText}`)
     }
 
-    const result = await response.json()
+    const transcription = await response.json()
 
-    // Update the recording with the transcript
-    const { error: updateError } = await supabase
+    // Update the recording with the transcription
+    const { error: updateError } = await supabaseClient
       .from('recordings')
-      .update({ 
-        transcript: result.text,
+      .update({
+        transcript: transcription.text,
         status: 'completed'
       })
       .eq('id', recordingId)
 
     if (updateError) {
-      throw new Error('Failed to update recording')
+      throw updateError
     }
 
     return new Response(
-      JSON.stringify({ success: true, transcript: result.text }),
+      JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
