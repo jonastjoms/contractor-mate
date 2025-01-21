@@ -1,4 +1,4 @@
-import { Home, FolderOpen } from "lucide-react"
+import { Home } from "lucide-react"
 import { useLocation } from "react-router-dom"
 import {
   Sidebar,
@@ -38,14 +38,6 @@ export function AppLayout({ children }: AppLayoutProps) {
                       <a href="/">
                         <Home className="h-4 w-4" />
                         <span>Hjem</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <a href="/projects">
-                        <FolderOpen className="h-4 w-4" />
-                        <span>Prosjekter</span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
