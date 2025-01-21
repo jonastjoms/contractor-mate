@@ -4,8 +4,7 @@ import { DropZone } from "@/components/drop-zone";
 import { RecordingList } from "@/components/recording-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Recording {
   id: string;
@@ -20,67 +19,8 @@ export default function Project() {
   const { toast } = useToast();
   const [recordings, setRecordings] = useState<Recording[]>([]);
 
-  const handleFileAccepted = async (file: File) => {
-    try {
-      // Upload file to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${crypto.randomUUID()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('audio')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Create recording record in the database
-      const { data: recordingData, error: recordingError } = await supabase
-        .from('recordings')
-        .insert({
-          project_id: id,
-          file_path: filePath,
-          name: file.name,
-          status: 'processing'
-        })
-        .select()
-        .single();
-
-      if (recordingError) {
-        throw recordingError;
-      }
-
-      // Add the new recording to the local state
-      const newRecording: Recording = {
-        id: recordingData.id,
-        name: file.name,
-        duration: "Processing...",
-        status: "processing"
-      };
-
-      setRecordings(prev => [newRecording, ...prev]);
-
-      // Call the transcribe function
-      const { error: transcribeError } = await supabase.functions.invoke('transcribe-audio', {
-        body: { recordingId: recordingData.id }
-      });
-
-      if (transcribeError) {
-        throw transcribeError;
-      }
-
-      toast({
-        title: "Recording uploaded",
-        description: "Your recording is being processed."
-      });
-    } catch (error) {
-      console.error('Error handling file:', error);
-      toast({
-        title: "Error",
-        description: "Failed to upload recording. Please try again.",
-        variant: "destructive"
-      });
-    }
+  const handleFileAccepted = (recording: Recording) => {
+    setRecordings(prev => [recording, ...prev]);
   };
 
   const handlePlay = (id: string) => {
@@ -119,7 +59,7 @@ export default function Project() {
             <CardTitle>Upload Recording</CardTitle>
           </CardHeader>
           <CardContent>
-            <DropZone onFileAccepted={handleFileAccepted} />
+            <DropZone projectId={id!} onFileAccepted={handleFileAccepted} />
           </CardContent>
         </Card>
 
