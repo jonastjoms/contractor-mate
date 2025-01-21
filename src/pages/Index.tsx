@@ -6,30 +6,71 @@ import { Plus, Search, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-const DEMO_PROJECTS = [
-  {
-    id: "1",
-    title: "Kjøkken Rostedsgate",
-    description: "Masse greierr",
-    date: "2024-02-20",
-  },
-  {
-    id: "2",
-    title: "Bathroom Update",
-    description: "Master bathroom renovation with new fixtures",
-    date: "2024-02-18",
-  },
-];
+interface Project {
+  id: string;
+  title: string;
+  description: string | null;
+  created_at: string;
+}
 
 export default function Index() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const filteredProjects = DEMO_PROJECTS.filter((project) =>
-    project.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Fetch projects
+  const { data: projects = [], isLoading } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+        return [];
+      }
+
+      return data as Project[];
+    },
+  });
+
+  const createProject = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .insert([
+          {
+            title: 'New Project',
+            description: 'Click to edit project details',
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      navigate(`/project/${data.id}`);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error creating project",
+        description: error.message,
+      });
+    },
+  });
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -42,12 +83,16 @@ export default function Index() {
     }
   };
 
+  const filteredProjects = projects.filter((project) =>
+    project.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Projects</h1>
         <div className="flex gap-4">
-          <Button onClick={() => navigate("/project/new")}>
+          <Button onClick={() => createProject.mutate()}>
             <Plus className="mr-2 h-4 w-4" /> New Project
           </Button>
           <Button variant="outline" onClick={handleLogout}>
@@ -66,11 +111,21 @@ export default function Index() {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredProjects.map((project) => (
-          <ProjectCard key={project.id} {...project} />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="text-center py-8">Loading projects...</div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredProjects.map((project) => (
+            <ProjectCard
+              key={project.id}
+              id={project.id}
+              title={project.title}
+              description={project.description || ""}
+              date={new Date(project.created_at).toLocaleDateString()}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
