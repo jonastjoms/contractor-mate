@@ -8,23 +8,23 @@ import { useNavigate } from "react-router-dom";
 const DEMO_PROJECTS = [
   {
     id: "1",
-    title: "Kitchen Renovation",
-    description: "Complete kitchen remodel including cabinets and appliances",
-    date: "2024-02-20"
+    title: "Kjøkken Rostedsgate",
+    description: "Masse greierr",
+    date: "2024-02-20",
   },
   {
     id: "2",
     title: "Bathroom Update",
     description: "Master bathroom renovation with new fixtures",
-    date: "2024-02-18"
-  }
+    date: "2024-02-18",
+  },
 ];
 
 export default function Index() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredProjects = DEMO_PROJECTS.filter(project =>
+  const filteredProjects = DEMO_PROJECTS.filter((project) =>
     project.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
