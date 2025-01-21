@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProjectCard } from "@/components/project-card";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const DEMO_PROJECTS = [
   {
@@ -23,18 +25,35 @@ const DEMO_PROJECTS = [
 export default function Index() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
 
   const filteredProjects = DEMO_PROJECTS.filter((project) =>
     project.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Projects</h1>
-        <Button onClick={() => navigate("/project/new")}>
-          <Plus className="mr-2 h-4 w-4" /> New Project
-        </Button>
+        <div className="flex gap-4">
+          <Button onClick={() => navigate("/project/new")}>
+            <Plus className="mr-2 h-4 w-4" /> New Project
+          </Button>
+          <Button variant="outline" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" /> Sign Out
+          </Button>
+        </div>
       </div>
 
       <div className="relative mb-6">
