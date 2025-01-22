@@ -67,10 +67,12 @@ serve(async (req) => {
               
               Return ONLY a valid JSON object with this exact structure, nothing else:
               {
-                "tasks": [{ "title": string, "description": string, "assignee": string }],
+                "tasks": [{ "title": string, "description": string, "assignee": Assignee }],
                 "materials": [{ "title": string, "description": string, "amount": number }],
                 "offer": { "title": string, "summary": string, "progress_plan": string, "total_price": number }
               }
+
+              type Assignee = "Tømrer" | "Rørlegger" | "Elektriker" | "Riv";
               
               Make sure total_price is a positive number greater than 0.
               
