@@ -53,7 +53,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -61,7 +61,8 @@ serve(async (req) => {
               1. A list of tasks that need to be done
               2. A list of materials needed with quantities
               3. A project offer including a summary and total price estimate
-              Format your response as JSON with the following structure:
+              
+              Return ONLY a valid JSON object with this exact structure, nothing else:
               {
                 "tasks": [{ "title": string, "description": string, "assignee": string }],
                 "materials": [{ "title": string, "description": string, "amount": number }],
@@ -87,9 +88,24 @@ serve(async (req) => {
     }
 
     const aiResult = await openAIResponse.json()
-    const analysis = JSON.parse(aiResult.choices[0].message.content)
+    console.log('Raw AI response:', aiResult.choices[0].message.content)
 
-    console.log('AI Analysis:', analysis)
+    // Ensure we're parsing valid JSON
+    let analysis
+    try {
+      analysis = JSON.parse(aiResult.choices[0].message.content.trim())
+    } catch (parseError) {
+      console.error('JSON parsing error:', parseError)
+      console.error('Invalid JSON content:', aiResult.choices[0].message.content)
+      throw new Error('Failed to parse AI response as JSON')
+    }
+
+    console.log('Parsed AI Analysis:', analysis)
+
+    // Validate the analysis structure
+    if (!analysis.tasks || !analysis.materials || !analysis.offer) {
+      throw new Error('AI response missing required fields')
+    }
 
     // Start a transaction to insert all the data
     const { error: transactionError } = await supabaseClient.rpc('process_recording_results', {
