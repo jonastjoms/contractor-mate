@@ -23,12 +23,12 @@ export default function Index() {
 
   // Fetch projects
   const { data: projects = [], isLoading } = useQuery({
-    queryKey: ['projects'],
+    queryKey: ["projects"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("projects")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (error) {
         toast({
@@ -46,18 +46,21 @@ export default function Index() {
   const createProject = useMutation({
     mutationFn: async () => {
       // Get the current user's ID
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
       if (userError || !user) {
         throw new Error(userError?.message || "User not authenticated");
       }
 
       const { data, error } = await supabase
-        .from('projects')
+        .from("projects")
         .insert([
           {
-            title: 'New Project',
-            description: 'Click to edit project details',
+            title: "New Project",
+            description: "Click to edit project details",
             user_id: user.id, // Add the user_id field
           },
         ])
@@ -68,7 +71,7 @@ export default function Index() {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
       navigate(`/project/${data.id}`);
     },
     onError: (error: Error) => {
@@ -102,9 +105,6 @@ export default function Index() {
         <div className="flex gap-4">
           <Button onClick={() => createProject.mutate()}>
             <Plus className="mr-2 h-4 w-4" /> New Project
-          </Button>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" /> Sign Out
           </Button>
         </div>
       </div>
