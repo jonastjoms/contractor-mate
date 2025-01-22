@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Cloud, File } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { Cloud, File, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,7 +16,7 @@ interface DropZoneProps {
 }
 
 export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
   const { toast } = useToast();
 
   const processRecordingResults = async (recordingId: string) => {
@@ -56,7 +55,7 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
     if (!file) return;
 
     try {
-      setUploadProgress(10);
+      setIsUploading(true);
       
       // Upload to Supabase Storage
       const filePath = `${projectId}/${Date.now()}-${file.name}`;
@@ -65,7 +64,6 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
-      setUploadProgress(50);
 
       // Create recording record
       const { data: recording, error: dbError } = await supabase
@@ -79,7 +77,6 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
         .single();
 
       if (dbError) throw dbError;
-      setUploadProgress(75);
 
       // Start transcription with retries
       let attempts = 0;
@@ -123,8 +120,6 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
 
           if (updateError) throw updateError;
 
-          setUploadProgress(100);
-
           // Notify parent component with updated recording
           onFileAccepted({
             id: updatedRecording.id,
@@ -142,7 +137,7 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
           // Process the transcript to generate tasks, materials, and offer
           await processRecordingResults(recording.id);
 
-          setTimeout(() => setUploadProgress(0), 500);
+          setIsUploading(false);
           return;
         } catch (error) {
           lastError = error;
@@ -164,7 +159,7 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
         description: error.message,
         variant: "destructive"
       });
-      setUploadProgress(0);
+      setIsUploading(false);
     }
   }, [projectId, onFileAccepted, toast]);
 
@@ -184,10 +179,10 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
     >
       <input {...getInputProps()} />
       <div className="flex flex-col items-center gap-2">
-        {uploadProgress > 0 ? (
+        {isUploading ? (
           <>
-            <File className="h-10 w-10 text-primary" />
-            <Progress value={uploadProgress} className="w-[60%]" />
+            <Loader2 className="h-10 w-10 text-primary animate-spin" />
+            <p className="text-sm text-gray-600">Analyserer innhold</p>
           </>
         ) : (
           <>
