@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { decode } from "https://deno.land/x/wav@1.0.0/mod.ts";
 import { FFmpeg } from "https://deno.land/x/ffmpeg@v1.0.0/mod.ts";
 
 const corsHeaders = {
