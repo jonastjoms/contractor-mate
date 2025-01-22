@@ -137,7 +137,7 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'audio/*': ['.mp3', '.wav', '.m4a', '.flac']
+      'audio/flac': ['.flac'] // Only accept FLAC files
     },
     maxFiles: 1
   });
@@ -159,10 +159,10 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
           <>
             <Cloud className="h-10 w-10 text-gray-400" />
             <p className="text-sm text-gray-600">
-              Drag and drop your audio recording here, or click to select
+              Drag and drop your FLAC audio recording here, or click to select
             </p>
             <p className="text-xs text-gray-400">
-              Supports MP3, WAV, M4A, FLAC
+              Only FLAC files are supported
             </p>
           </>
         )}
