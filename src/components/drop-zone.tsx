@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Cloud, File, Loader2 } from "lucide-react";
+import { Cloud, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -136,7 +136,7 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
 
           // Process the transcript to generate tasks, materials, and offer
           await processRecordingResults(recording.id);
-
+          
           setIsUploading(false);
           return;
         } catch (error) {
