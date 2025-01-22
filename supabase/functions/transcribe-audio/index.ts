@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { FFmpeg } from "https://deno.land/x/ffmpeg@v1.0.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,39 +41,20 @@ serve(async (req) => {
       throw downloadError
     }
 
-    // Convert to FLAC using FFmpeg
-    const ffmpeg = new FFmpeg();
-    const inputPath = await Deno.makeTempFile({ suffix: '.m4a' });
-    const outputPath = await Deno.makeTempFile({ suffix: '.flac' });
+    // Convert audio file to ArrayBuffer
+    const audioBuffer = await fileData.arrayBuffer()
 
-    // Write the downloaded file to a temporary location
-    await Deno.writeFile(inputPath, new Uint8Array(await fileData.arrayBuffer()));
-
-    // Convert to FLAC
-    await ffmpeg.run([
-      '-i', inputPath,
-      '-c:a', 'flac',
-      outputPath
-    ]);
-
-    // Read the converted FLAC file
-    const flacData = await Deno.readFile(outputPath);
-
-    // Clean up temporary files
-    await Deno.remove(inputPath);
-    await Deno.remove(outputPath);
-
-    // Send the FLAC file to the Hugging Face API
+    // Send directly to Hugging Face API
     const response = await fetch(
       "https://kelhfabjfneinfr9.us-east-1.aws.endpoints.huggingface.cloud",
       {
         headers: { 
           "Accept": "application/json",
           "Authorization": `Bearer ${Deno.env.get('HUGGINGFACE_API_KEY')}`,
-          "Content-Type": "audio/flac"
+          "Content-Type": "audio/m4a"
         },
         method: "POST",
-        body: flacData,
+        body: audioBuffer,
       }
     )
 
