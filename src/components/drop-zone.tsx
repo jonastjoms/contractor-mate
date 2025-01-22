@@ -20,6 +20,37 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const { toast } = useToast();
 
+  const processRecordingResults = async (recordingId: string) => {
+    try {
+      const { error: processError } = await supabase.functions
+        .invoke('process-transcript', {
+          body: { recording_id: recordingId }
+        });
+
+      if (processError) {
+        console.error('Processing error:', processError);
+        toast({
+          title: "Processing failed",
+          description: processError.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Processing complete",
+        description: "Tasks, materials, and offer have been generated."
+      });
+    } catch (error) {
+      console.error('Processing error:', error);
+      toast({
+        title: "Processing failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
@@ -107,6 +138,9 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
             title: "Recording processed",
             description: "Your recording has been successfully transcribed."
           });
+
+          // Process the transcript to generate tasks, materials, and offer
+          await processRecordingResults(recording.id);
 
           setTimeout(() => setUploadProgress(0), 500);
           return;
