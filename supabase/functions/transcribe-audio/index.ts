@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const { recording_id } = await req.json()
+    console.log('Processing recording:', recording_id)
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -28,8 +29,11 @@ serve(async (req) => {
       .single()
 
     if (recordingError) {
+      console.error('Error fetching recording:', recordingError)
       throw recordingError
     }
+
+    console.log('Found recording:', recording.file_path)
 
     // Download the audio file from storage
     const { data: fileData, error: downloadError } = await supabaseClient
@@ -38,13 +42,18 @@ serve(async (req) => {
       .download(recording.file_path)
 
     if (downloadError) {
+      console.error('Error downloading file:', downloadError)
       throw downloadError
     }
 
+    console.log('Successfully downloaded audio file')
+
     // Convert audio file to ArrayBuffer
     const audioBuffer = await fileData.arrayBuffer()
+    console.log('Audio buffer size:', audioBuffer.byteLength)
 
-    // Send directly to Hugging Face API
+    // Send to Hugging Face API
+    console.log('Sending to Hugging Face API...')
     const response = await fetch(
       "https://kelhfabjfneinfr9.us-east-1.aws.endpoints.huggingface.cloud",
       {
@@ -58,7 +67,14 @@ serve(async (req) => {
       }
     )
 
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Hugging Face API error:', response.status, errorText)
+      throw new Error(`Hugging Face API error: ${response.status} - ${errorText}`)
+    }
+
     const result = await response.json()
+    console.log('Transcription result:', result)
 
     // Update the recording with the transcription
     const { error: updateError } = await supabaseClient
@@ -70,18 +86,28 @@ serve(async (req) => {
       .eq('id', recording_id)
 
     if (updateError) {
+      console.error('Error updating recording:', updateError)
       throw updateError
     }
 
+    console.log('Successfully updated recording with transcript')
+
     return new Response(
       JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      }
     )
 
   } catch (error) {
+    console.error('Function error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+        status: 500 
+      }
     )
   }
 })
