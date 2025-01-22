@@ -1,4 +1,5 @@
 import { LogOut, Home } from "lucide-react"
+import { useEffect } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import {
   Sidebar,
@@ -24,6 +25,34 @@ export function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate()
   const { toast } = useToast()
   const isAuthPage = location.pathname === "/auth"
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/auth')
+      } else if (event === 'SIGNED_IN') {
+        navigate('/')
+      } else if (!session && !isAuthPage) {
+        // No session and not on auth page - redirect to auth
+        navigate('/auth')
+      }
+    })
+
+    // Check initial session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session && !isAuthPage) {
+        navigate('/auth')
+      }
+    }
+    checkSession()
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [navigate, isAuthPage])
 
   const handleSignOut = async () => {
     try {
