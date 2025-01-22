@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, FileAudio, Loader2, Wand2 } from "lucide-react";
+import { FileAudio, Loader2, Wand2, Trash2 } from "lucide-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Recording {
   id: string;
@@ -14,12 +15,13 @@ interface Recording {
 
 interface RecordingListProps {
   recordings: Recording[];
-  onPlay: (id: string) => void;
   onUpdate: (recording: Recording) => void;
   onGenerate: (id: string) => void;
 }
 
-export function RecordingList({ recordings, onPlay, onUpdate, onGenerate }: RecordingListProps) {
+export function RecordingList({ recordings, onUpdate, onGenerate }: RecordingListProps) {
+  const { toast } = useToast();
+
   useEffect(() => {
     // Subscribe to changes in the recordings table
     const channel = supabase
@@ -50,6 +52,29 @@ export function RecordingList({ recordings, onPlay, onUpdate, onGenerate }: Reco
     };
   }, [recordings, onUpdate]);
 
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('recordings')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Recording deleted successfully."
+      });
+    } catch (error) {
+      console.error('Error deleting recording:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete recording.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       {recordings.map((recording) => (
@@ -76,9 +101,10 @@ export function RecordingList({ recordings, onPlay, onUpdate, onGenerate }: Reco
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => onPlay(recording.id)}
+                onClick={() => handleDelete(recording.id)}
+                title="Delete recording"
               >
-                <Play className="h-4 w-4" />
+                <Trash2 className="h-4 w-4 text-red-500" />
               </Button>
             </div>
           </CardHeader>
