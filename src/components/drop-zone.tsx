@@ -51,12 +51,20 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
       setUploadProgress(75);
 
       // Start transcription
-      const { error: transcriptionError } = await supabase.functions
+      const { data, error: transcriptionError } = await supabase.functions
         .invoke('transcribe-audio', {
-          body: { recordingId: recording.id }
+          body: { recording_id: recording.id }
         });
 
-      if (transcriptionError) throw transcriptionError;
+      if (transcriptionError) {
+        console.error('Transcription error:', transcriptionError);
+        throw new Error(`Transcription failed: ${transcriptionError.message}`);
+      }
+
+      if (!data?.success) {
+        throw new Error('Transcription failed: No success response received');
+      }
+
       setUploadProgress(100);
 
       // Notify parent component

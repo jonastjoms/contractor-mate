@@ -12,7 +12,14 @@ serve(async (req) => {
   }
 
   try {
-    const { recording_id } = await req.json()
+    const body = await req.json()
+    const recording_id = body.recording_id
+
+    if (!recording_id) {
+      console.error('No recording_id provided in request body')
+      throw new Error('recording_id is required')
+    }
+
     console.log('Processing recording:', recording_id)
 
     // Initialize Supabase client
@@ -103,7 +110,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Function error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        success: false
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
         status: 500 
