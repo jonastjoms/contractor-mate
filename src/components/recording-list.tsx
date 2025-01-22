@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, FileAudio, Loader2 } from "lucide-react";
+import { Play, FileAudio, Loader2, Wand2 } from "lucide-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,9 +16,10 @@ interface RecordingListProps {
   recordings: Recording[];
   onPlay: (id: string) => void;
   onUpdate: (recording: Recording) => void;
+  onGenerate: (id: string) => void;
 }
 
-export function RecordingList({ recordings, onPlay, onUpdate }: RecordingListProps) {
+export function RecordingList({ recordings, onPlay, onUpdate, onGenerate }: RecordingListProps) {
   useEffect(() => {
     // Subscribe to changes in the recordings table
     const channel = supabase
@@ -62,6 +63,16 @@ export function RecordingList({ recordings, onPlay, onUpdate }: RecordingListPro
             </CardTitle>
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500">{recording.duration}</span>
+              {recording.status === "completed" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onGenerate(recording.id)}
+                  title="Generate tasks, materials, and offer"
+                >
+                  <Wand2 className="h-4 w-4" />
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="ghost"

@@ -104,6 +104,39 @@ export default function Project() {
     },
   });
 
+  // Fetch recordings when component mounts
+  useEffect(() => {
+    const fetchRecordings = async () => {
+      const { data, error } = await supabase
+        .from('recordings')
+        .select('*')
+        .eq('project_id', id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        toast({
+          title: "Error fetching recordings",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (data) {
+        const formattedRecordings = data.map(rec => ({
+          id: rec.id,
+          name: rec.file_path.split('/').pop(),
+          duration: "N/A",
+          status: rec.status as "processing" | "completed",
+          transcript: rec.transcript
+        }));
+        setRecordings(formattedRecordings);
+      }
+    };
+
+    fetchRecordings();
+  }, [id, toast]);
+
   const handleFileAccepted = (recording: Recording) => {
     setRecordings(prev => [recording, ...prev]);
   };
@@ -123,11 +156,45 @@ export default function Project() {
           : rec
       )
     );
+  };
 
-    if (recording.status === "completed") {
+  const handleManualGeneration = async (recordingId: string) => {
+    try {
       toast({
-        title: "Recording processed",
-        description: "Your recording has been successfully transcribed."
+        title: "Processing",
+        description: "Generating tasks, materials, and offer..."
+      });
+
+      const { error: processError } = await supabase.functions
+        .invoke('process-transcript', {
+          body: { recording_id: recordingId }
+        });
+
+      if (processError) {
+        console.error('Processing error:', processError);
+        toast({
+          title: "Processing failed",
+          description: processError.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['tasks', id] });
+      queryClient.invalidateQueries({ queryKey: ['materials', id] });
+      queryClient.invalidateQueries({ queryKey: ['offer', id] });
+
+      toast({
+        title: "Processing complete",
+        description: "Tasks, materials, and offer have been generated."
+      });
+    } catch (error) {
+      console.error('Processing error:', error);
+      toast({
+        title: "Processing failed",
+        description: error.message,
+        variant: "destructive"
       });
     }
   };
@@ -217,6 +284,7 @@ export default function Project() {
                   recordings={recordings}
                   onPlay={handlePlay}
                   onUpdate={handleUpdate}
+                  onGenerate={handleManualGeneration}
                 />
               </CardContent>
             </Card>
