@@ -8,11 +8,11 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { recordingId } = await req.json()
+    const { recording_id } = await req.json()
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -20,18 +20,18 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Get the recording details
+    // Get recording details
     const { data: recording, error: recordingError } = await supabaseClient
       .from('recordings')
       .select('*')
-      .eq('id', recordingId)
+      .eq('id', recording_id)
       .single()
 
     if (recordingError) {
       throw recordingError
     }
 
-    // Download the audio file
+    // Download the audio file from storage
     const { data: fileData, error: downloadError } = await supabaseClient
       .storage
       .from('audio')
@@ -58,20 +58,16 @@ serve(async (req) => {
       }
     )
 
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`)
-    }
-
-    const transcription = await response.json()
+    const result = await response.json()
 
     // Update the recording with the transcription
     const { error: updateError } = await supabaseClient
       .from('recordings')
       .update({
-        transcript: transcription.text,
+        transcript: result.text,
         status: 'completed'
       })
-      .eq('id', recordingId)
+      .eq('id', recording_id)
 
     if (updateError) {
       throw updateError
@@ -81,11 +77,11 @@ serve(async (req) => {
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
+
   } catch (error) {
-    console.error('Error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
     )
   }
 })
