@@ -17,9 +17,10 @@ interface RecordingListProps {
   recordings: Recording[];
   onUpdate: (recording: Recording) => void;
   onGenerate: (id: string) => void;
+  onDelete?: () => void;
 }
 
-export function RecordingList({ recordings, onUpdate, onGenerate }: RecordingListProps) {
+export function RecordingList({ recordings, onUpdate, onGenerate, onDelete }: RecordingListProps) {
   const { toast } = useToast();
 
   useEffect(() => {
@@ -65,6 +66,11 @@ export function RecordingList({ recordings, onUpdate, onGenerate }: RecordingLis
         title: "Success",
         description: "Recording deleted successfully."
       });
+      
+      // Notify parent component to refetch recordings
+      if (onDelete) {
+        onDelete();
+      }
     } catch (error) {
       console.error('Error deleting recording:', error);
       toast({

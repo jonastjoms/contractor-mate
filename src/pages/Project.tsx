@@ -104,36 +104,36 @@ export default function Project() {
     },
   });
 
-  // Fetch recordings when component mounts
+  // Fetch recordings when component mounts or after deletion
+  const fetchRecordings = async () => {
+    const { data, error } = await supabase
+      .from('recordings')
+      .select('*')
+      .eq('project_id', id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast({
+        title: "Error fetching recordings",
+        description: error.message,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (data) {
+      const formattedRecordings = data.map(rec => ({
+        id: rec.id,
+        name: rec.file_path.split('/').pop(),
+        duration: "N/A",
+        status: rec.status as "processing" | "completed",
+        transcript: rec.transcript
+      }));
+      setRecordings(formattedRecordings);
+    }
+  };
+
   useEffect(() => {
-    const fetchRecordings = async () => {
-      const { data, error } = await supabase
-        .from('recordings')
-        .select('*')
-        .eq('project_id', id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        toast({
-          title: "Error fetching recordings",
-          description: error.message,
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (data) {
-        const formattedRecordings = data.map(rec => ({
-          id: rec.id,
-          name: rec.file_path.split('/').pop(),
-          duration: "N/A",
-          status: rec.status as "processing" | "completed",
-          transcript: rec.transcript
-        }));
-        setRecordings(formattedRecordings);
-      }
-    };
-
     fetchRecordings();
   }, [id, toast]);
 
@@ -277,6 +277,7 @@ export default function Project() {
                   recordings={recordings}
                   onUpdate={handleUpdate}
                   onGenerate={handleManualGeneration}
+                  onDelete={fetchRecordings}
                 />
               </CardContent>
             </Card>
