@@ -4,9 +4,12 @@ import { DropZone } from "@/components/drop-zone";
 import { RecordingList } from "@/components/recording-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Pencil, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Recording {
   id: string;
@@ -41,7 +44,25 @@ interface Offer {
 export default function Project() {
   const { id } = useParams();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [recordings, setRecordings] = useState<Recording[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [projectTitle, setProjectTitle] = useState("");
+
+  const { data: project } = useQuery({
+    queryKey: ['project', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      setProjectTitle(data.title);
+      return data;
+    },
+  });
 
   const { data: tasks } = useQuery({
     queryKey: ['tasks', id],
@@ -111,11 +132,65 @@ export default function Project() {
     }
   };
 
+  const handleTitleSave = async () => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ title: projectTitle })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: ['project', id] });
+      
+      toast({
+        title: "Success",
+        description: "Project title updated successfully."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update project title.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8">
-        {id === "new" ? "New Project" : `Project Details`}
-      </h1>
+      <div className="flex items-center gap-4 mb-8">
+        {isEditing ? (
+          <div className="flex items-center gap-2">
+            <Input
+              value={projectTitle}
+              onChange={(e) => setProjectTitle(e.target.value)}
+              className="text-3xl font-bold h-12"
+              placeholder="Project Title"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleTitleSave}
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold">
+              {project?.title || "Project Details"}
+            </h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsEditing(true)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
 
       <div className="grid gap-6">
         <Card>
