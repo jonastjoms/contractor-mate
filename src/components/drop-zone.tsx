@@ -50,37 +50,65 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
       if (dbError) throw dbError;
       setUploadProgress(75);
 
-      // Start transcription
-      const { data, error: transcriptionError } = await supabase.functions
-        .invoke('transcribe-audio', {
-          body: { recording_id: recording.id }
-        });
+      // Start transcription with retries
+      let attempts = 0;
+      const maxAttempts = 3;
+      let lastError = null;
 
-      if (transcriptionError) {
-        console.error('Transcription error:', transcriptionError);
-        throw new Error(`Transcription failed: ${transcriptionError.message}`);
+      while (attempts < maxAttempts) {
+        try {
+          const { data, error: transcriptionError } = await supabase.functions
+            .invoke('transcribe-audio', {
+              body: { recording_id: recording.id }
+            });
+
+          if (transcriptionError) {
+            console.error('Transcription error:', transcriptionError);
+            if (transcriptionError.message.includes('503')) {
+              lastError = transcriptionError;
+              attempts++;
+              if (attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 1000));
+                continue;
+              }
+            }
+            throw transcriptionError;
+          }
+
+          if (!data?.success) {
+            throw new Error('Transcription failed: No success response received');
+          }
+
+          setUploadProgress(100);
+
+          // Notify parent component
+          onFileAccepted({
+            id: recording.id,
+            name: file.name,
+            duration: "Processing...",
+            status: "processing"
+          });
+
+          toast({
+            title: "Recording uploaded",
+            description: "Your recording is being processed."
+          });
+
+          setTimeout(() => setUploadProgress(0), 500);
+          return;
+        } catch (error) {
+          lastError = error;
+          attempts++;
+          if (attempts < maxAttempts && error.message.includes('503')) {
+            continue;
+          }
+          break;
+        }
       }
 
-      if (!data?.success) {
-        throw new Error('Transcription failed: No success response received');
-      }
+      // If we get here, all attempts failed
+      throw lastError || new Error('Failed to process recording after multiple attempts');
 
-      setUploadProgress(100);
-
-      // Notify parent component
-      onFileAccepted({
-        id: recording.id,
-        name: file.name,
-        duration: "Processing...",
-        status: "processing"
-      });
-
-      toast({
-        title: "Recording uploaded",
-        description: "Your recording is being processed."
-      });
-
-      setTimeout(() => setUploadProgress(0), 500);
     } catch (error) {
       console.error('Upload error:', error);
       toast({

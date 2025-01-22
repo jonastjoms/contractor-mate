@@ -59,53 +59,84 @@ serve(async (req) => {
     const audioBuffer = await fileData.arrayBuffer()
     console.log('Audio buffer size:', audioBuffer.byteLength)
 
-    // Send to Hugging Face API
-    console.log('Sending to Hugging Face API...')
-    const response = await fetch(
-      "https://kelhfabjfneinfr9.us-east-1.aws.endpoints.huggingface.cloud",
-      {
-        headers: { 
-          "Accept": "application/json",
-          "Authorization": `Bearer ${Deno.env.get('HUGGINGFACE_API_KEY')}`,
-          "Content-Type": "audio/m4a"
-        },
-        method: "POST",
-        body: audioBuffer,
-      }
-    )
+    // Try to send to Hugging Face API with retries
+    let attempts = 0;
+    const maxAttempts = 3;
+    let lastError = null;
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Hugging Face API error:', response.status, errorText)
-      throw new Error(`Hugging Face API error: ${response.status} - ${errorText}`)
+    while (attempts < maxAttempts) {
+      try {
+        console.log(`Attempt ${attempts + 1} of ${maxAttempts} to call Hugging Face API`)
+        const response = await fetch(
+          "https://kelhfabjfneinfr9.us-east-1.aws.endpoints.huggingface.cloud",
+          {
+            headers: { 
+              "Accept": "application/json",
+              "Authorization": `Bearer ${Deno.env.get('HUGGINGFACE_API_KEY')}`,
+              "Content-Type": "audio/m4a"
+            },
+            method: "POST",
+            body: audioBuffer,
+          }
+        )
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Hugging Face API error:', response.status, errorText)
+          
+          if (response.status === 503) {
+            // Service unavailable - retry
+            lastError = new Error(`Hugging Face API temporarily unavailable (503) - attempt ${attempts + 1}`)
+            attempts++
+            if (attempts < maxAttempts) {
+              // Wait before retrying (exponential backoff)
+              await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 1000))
+              continue
+            }
+          }
+          
+          throw new Error(`Hugging Face API error: ${response.status} - ${errorText}`)
+        }
+
+        const result = await response.json()
+        console.log('Transcription result:', result)
+
+        // Update the recording with the transcription
+        const { error: updateError } = await supabaseClient
+          .from('recordings')
+          .update({
+            transcript: result.text,
+            status: 'completed'
+          })
+          .eq('id', recording_id)
+
+        if (updateError) {
+          console.error('Error updating recording:', updateError)
+          throw updateError
+        }
+
+        console.log('Successfully updated recording with transcript')
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200
+          }
+        )
+      } catch (error) {
+        lastError = error
+        attempts++
+        if (attempts < maxAttempts && error.message.includes('503')) {
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 1000))
+          continue
+        }
+        break
+      }
     }
 
-    const result = await response.json()
-    console.log('Transcription result:', result)
-
-    // Update the recording with the transcription
-    const { error: updateError } = await supabaseClient
-      .from('recordings')
-      .update({
-        transcript: result.text,
-        status: 'completed'
-      })
-      .eq('id', recording_id)
-
-    if (updateError) {
-      console.error('Error updating recording:', updateError)
-      throw updateError
-    }
-
-    console.log('Successfully updated recording with transcript')
-
-    return new Response(
-      JSON.stringify({ success: true }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      }
-    )
+    // If we get here, all attempts failed
+    throw lastError || new Error('Failed to transcribe after multiple attempts')
 
   } catch (error) {
     console.error('Function error:', error)
