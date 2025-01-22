@@ -41,17 +41,20 @@ serve(async (req) => {
       throw downloadError
     }
 
-    // Send the audio file to the Hugging Face API
+    // Convert audio file to ArrayBuffer
+    const audioBuffer = await fileData.arrayBuffer()
+
+    // Send directly to Hugging Face API
     const response = await fetch(
       "https://kelhfabjfneinfr9.us-east-1.aws.endpoints.huggingface.cloud",
       {
         headers: { 
           "Accept": "application/json",
           "Authorization": `Bearer ${Deno.env.get('HUGGINGFACE_API_KEY')}`,
-          "Content-Type": "audio/flac"
+          "Content-Type": "audio/m4a"
         },
         method: "POST",
-        body: fileData,
+        body: audioBuffer,
       }
     )
 
