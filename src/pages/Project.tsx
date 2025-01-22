@@ -97,10 +97,10 @@ export default function Project() {
         .from('offers')
         .select('*')
         .eq('project_id', id)
-        .single();
+        .maybeSingle();
       
       if (error && error.code !== 'PGRST116') throw error;
-      return data as Offer;
+      return data as Offer | null;
     },
   });
 
