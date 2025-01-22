@@ -79,19 +79,33 @@ export function DropZone({ onFileAccepted, projectId }: DropZoneProps) {
             throw new Error('Transcription failed: No success response received');
           }
 
+          // Update recording with transcript
+          const { data: updatedRecording, error: updateError } = await supabase
+            .from('recordings')
+            .update({
+              transcript: data.transcript,
+              status: 'completed'
+            })
+            .eq('id', recording.id)
+            .select()
+            .single();
+
+          if (updateError) throw updateError;
+
           setUploadProgress(100);
 
-          // Notify parent component
+          // Notify parent component with updated recording
           onFileAccepted({
-            id: recording.id,
+            id: updatedRecording.id,
             name: file.name,
             duration: "Processing...",
-            status: "processing"
+            status: "completed",
+            transcript: updatedRecording.transcript
           });
 
           toast({
-            title: "Recording uploaded",
-            description: "Your recording is being processed."
+            title: "Recording processed",
+            description: "Your recording has been successfully transcribed."
           });
 
           setTimeout(() => setUploadProgress(0), 500);
