@@ -59,14 +59,15 @@ serve(async (req) => {
     const audioBuffer = await fileData.arrayBuffer()
     console.log('Audio buffer size:', audioBuffer.byteLength)
 
-    // Try to send to Hugging Face API with retries
-    let attempts = 0;
-    const maxAttempts = 3;
+    // Implement retry logic for Hugging Face API calls
+    const maxRetries = 3;
+    const baseDelay = 1000; // Start with 1 second delay
+    let attempt = 0;
     let lastError = null;
 
-    while (attempts < maxAttempts) {
+    while (attempt < maxRetries) {
       try {
-        console.log(`Attempt ${attempts + 1} of ${maxAttempts} to call Hugging Face API`)
+        console.log(`Attempt ${attempt + 1} of ${maxRetries} to call Hugging Face API`)
         const response = await fetch(
           "https://kelhfabjfneinfr9.us-east-1.aws.endpoints.huggingface.cloud",
           {
@@ -85,14 +86,13 @@ serve(async (req) => {
           console.error('Hugging Face API error:', response.status, errorText)
           
           if (response.status === 503) {
-            // Service unavailable - retry
-            lastError = new Error(`Hugging Face API temporarily unavailable (503) - attempt ${attempts + 1}`)
-            attempts++
-            if (attempts < maxAttempts) {
-              // Wait before retrying (exponential backoff)
-              await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 1000))
-              continue
-            }
+            // Service unavailable - implement exponential backoff
+            const delay = Math.min(baseDelay * Math.pow(2, attempt), 10000) // Cap at 10 seconds
+            console.log(`Service unavailable, retrying in ${delay}ms...`)
+            await new Promise(resolve => setTimeout(resolve, delay))
+            attempt++
+            lastError = new Error(`Hugging Face API temporarily unavailable (503) - attempt ${attempt}`)
+            continue
           }
           
           throw new Error(`Hugging Face API error: ${response.status} - ${errorText}`)
@@ -118,7 +118,7 @@ serve(async (req) => {
         console.log('Successfully updated recording with transcript')
 
         return new Response(
-          JSON.stringify({ success: true }),
+          JSON.stringify({ success: true, transcript: result.text }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200
@@ -126,9 +126,8 @@ serve(async (req) => {
         )
       } catch (error) {
         lastError = error
-        attempts++
-        if (attempts < maxAttempts && error.message.includes('503')) {
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 1000))
+        if (attempt < maxRetries - 1 && error.message.includes('503')) {
+          attempt++
           continue
         }
         break
