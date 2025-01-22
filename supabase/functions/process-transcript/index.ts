@@ -60,14 +60,16 @@ serve(async (req) => {
             content: `You are a construction project assistant. Analyze the transcript and generate:
               1. A list of tasks that need to be done
               2. A list of materials needed with quantities
-              3. A project offer including a summary and total price estimate
+              3. A project offer including a summary and total price estimate (must be a positive number)
               
               Return ONLY a valid JSON object with this exact structure, nothing else:
               {
                 "tasks": [{ "title": string, "description": string, "assignee": string }],
                 "materials": [{ "title": string, "description": string, "amount": number }],
                 "offer": { "title": string, "summary": string, "progress_plan": string, "total_price": number }
-              }`
+              }
+              
+              Make sure total_price is a positive number greater than 0.`
           },
           { role: 'user', content: recording.transcript }
         ],
@@ -102,9 +104,15 @@ serve(async (req) => {
 
     console.log('Parsed AI Analysis:', analysis)
 
-    // Validate the analysis structure
+    // Validate the analysis structure and data types
     if (!analysis.tasks || !analysis.materials || !analysis.offer) {
       throw new Error('AI response missing required fields')
+    }
+
+    // Validate offer total_price
+    if (!analysis.offer.total_price || typeof analysis.offer.total_price !== 'number' || analysis.offer.total_price <= 0) {
+      console.error('Invalid total_price:', analysis.offer.total_price)
+      throw new Error('Offer total_price must be a positive number')
     }
 
     // Start a transaction to insert all the data
