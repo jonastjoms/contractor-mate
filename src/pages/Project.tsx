@@ -141,13 +141,6 @@ export default function Project() {
     setRecordings(prev => [recording, ...prev]);
   };
 
-  const handlePlay = (id: string) => {
-    toast({
-      title: "Playing recording",
-      description: "Audio playback started."
-    });
-  };
-
   const handleUpdate = (recording: Recording) => {
     setRecordings(prev =>
       prev.map(rec =>
@@ -282,7 +275,6 @@ export default function Project() {
               <CardContent className="pt-6">
                 <RecordingList
                   recordings={recordings}
-                  onPlay={handlePlay}
                   onUpdate={handleUpdate}
                   onGenerate={handleManualGeneration}
                 />
