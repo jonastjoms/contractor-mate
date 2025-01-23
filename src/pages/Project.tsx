@@ -356,15 +356,15 @@ export default function Project() {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="Opptak">
+        <Tabs defaultValue="recordings">
           <TabsList>
-            <TabsTrigger value="Opptak">Opptak</TabsTrigger>
-            <TabsTrigger value="oppgaver">Oppgaver</TabsTrigger>
-            <TabsTrigger value="materialer">Materialer</TabsTrigger>
-            <TabsTrigger value="tilbud">Tilbud</TabsTrigger>
+            <TabsTrigger value="recordings">Recordings</TabsTrigger>
+            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="materials">Materials</TabsTrigger>
+            <TabsTrigger value="offer">Offer</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="Opptak">
+          <TabsContent value="recordings">
             <Card>
               <CardContent className="pt-6">
                 <RecordingList
@@ -377,10 +377,10 @@ export default function Project() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="Oppgaver">
+          <TabsContent value="tasks">
             <Card>
               <CardContent className="pt-6">
-                {tasks?.length ? (
+                {tasks && tasks.length > 0 ? (
                   <div className="space-y-4">
                     {tasks.map((task) => (
                       <div key={task.id} className="border p-4 rounded-lg">
@@ -405,7 +405,7 @@ export default function Project() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="Materialer">
+          <TabsContent value="materials">
             <Card>
               <CardContent className="pt-6">
                 {materials?.length ? (
@@ -437,7 +437,7 @@ export default function Project() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="Tilbud">
+          <TabsContent value="offer">
             <Card>
               <CardContent className="pt-6" id="offer-content">
                 {offer ? (

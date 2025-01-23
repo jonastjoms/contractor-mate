@@ -20,28 +20,35 @@ interface RecordingListProps {
   onDelete?: () => void;
 }
 
-export function RecordingList({ recordings, onUpdate, onGenerate, onDelete }: RecordingListProps) {
+export function RecordingList({
+  recordings,
+  onUpdate,
+  onGenerate,
+  onDelete,
+}: RecordingListProps) {
   const { toast } = useToast();
 
   useEffect(() => {
     // Subscribe to changes in the recordings table
     const channel = supabase
-      .channel('recordings-changes')
+      .channel("recordings-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'recordings',
+          event: "UPDATE",
+          schema: "public",
+          table: "recordings",
         },
         (payload) => {
           const updatedRecording = payload.new;
-          const existingRecording = recordings.find(r => r.id === updatedRecording.id);
+          const existingRecording = recordings.find(
+            (r) => r.id === updatedRecording.id
+          );
           if (existingRecording) {
             onUpdate({
               ...existingRecording,
               status: updatedRecording.status as "processing" | "completed",
-              transcript: updatedRecording.transcript
+              transcript: updatedRecording.transcript,
             });
           }
         }
@@ -55,28 +62,25 @@ export function RecordingList({ recordings, onUpdate, onGenerate, onDelete }: Re
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('recordings')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from("recordings").delete().eq("id", id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Recording deleted successfully."
+        description: "Recording deleted successfully.",
       });
-      
+
       // Notify parent component to refetch recordings
       if (onDelete) {
         onDelete();
       }
     } catch (error) {
-      console.error('Error deleting recording:', error);
+      console.error("Error deleting recording:", error);
       toast({
         title: "Error",
         description: "Failed to delete recording.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -93,13 +97,15 @@ export function RecordingList({ recordings, onUpdate, onGenerate, onDelete }: Re
               </div>
             </CardTitle>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">{recording.duration}</span>
+              <span className="text-xs text-gray-500">
+                {recording.duration}
+              </span>
               {recording.status === "completed" && (
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => onGenerate(recording.id)}
-                  title="Generate tasks, materials, and offer"
+                  title="Lag oppgaver, materialliste og tilbud"
                 >
                   <Wand2 className="h-4 w-4" />
                 </Button>

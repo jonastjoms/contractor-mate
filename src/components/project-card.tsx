@@ -65,7 +65,10 @@ export function ProjectCard({
           variant="ghost"
           size="sm"
           className="absolute top-2 right-2"
-          onClick={() => handleDelete}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent the Link from being triggered
+            handleDelete(id); // Call the delete handler
+          }}
           title="Slett"
         >
           <Trash2 className="h-4 w-4 text-red-500" />
