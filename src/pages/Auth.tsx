@@ -5,8 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from "@/components/ui/menubar";
-import { Home, LayoutGrid } from "lucide-react";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -43,7 +41,8 @@ export default function Auth() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description:
+          error instanceof Error ? error.message : "An error occurred",
       });
     } finally {
       setIsLoading(false);
@@ -52,35 +51,6 @@ export default function Auth() {
 
   return (
     <div className="relative min-h-screen">
-      {/* Navigation Menu */}
-      <div className="absolute right-4 top-4">
-        <Menubar className="border-none bg-transparent">
-          <MenubarMenu>
-            <MenubarTrigger className="cursor-pointer">
-              <Home className="mr-2 h-4 w-4" />
-              Hjem
-            </MenubarTrigger>
-            <MenubarContent>
-              <MenubarItem onClick={() => navigate("/")}>
-                Gå til Hjem
-              </MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
-          <MenubarMenu>
-            <MenubarTrigger className="cursor-pointer">
-              <LayoutGrid className="mr-2 h-4 w-4" />
-              Prosjekter
-            </MenubarTrigger>
-            <MenubarContent>
-              <MenubarItem onClick={() => navigate("/")}>
-                Se alle prosjekter
-              </MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
-        </Menubar>
-      </div>
-
-      {/* Auth Form */}
       <div className="container mx-auto flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md space-y-8 rounded-lg border bg-card p-8 shadow-sm">
           <div className="space-y-2 text-center">
@@ -129,8 +99,8 @@ export default function Auth() {
               className="text-sm"
             >
               {isSignUp
-                ? "Already have an account? Sign in"
-                : "Don't have an account? Sign up"}
+                ? "Har du allerede en konto? Trykk her"
+                : "Har du ikke en konto? Trykk her"}
             </Button>
           </div>
         </div>

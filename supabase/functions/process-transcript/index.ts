@@ -60,10 +60,12 @@ serve(async (req) => {
           messages: [
             {
               role: "system",
-              content: `You are a construction project assistant. Analyze the transcript and generate:
+              content: `You are a construction project assistant. Analyze the transcript from a dialog between a General contractor and a client on site and generate:
               1. A list of tasks that need to be done
               2. A list of materials needed with quantities
               3. A project offer including a summary and total price estimate (must be a positive number)
+
+              Focus on the content of the transcriptions and generate the tasks, materials, and offer based on the conversation. In the offer summary, create seperate parts for different rooms so the document becomes structured and look good.
               
               Return ONLY a valid JSON object with this exact structure, nothing else:
               {
