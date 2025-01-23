@@ -14,6 +14,24 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const warmUpHuggingFace = async () => {
+    try {
+      console.log("Triggering Hugging Face warm-up via Edge Function...");
+
+      const { data, error } = await supabase.functions.invoke(
+        "huggingface-warmup"
+      );
+
+      if (error) {
+        console.warn("Hugging Face warm-up failed:", error.message);
+      } else {
+        console.log("Hugging Face endpoint warmed up successfully:", data);
+      }
+    } catch (error) {
+      console.error("Error warming up Hugging Face endpoint:", error);
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -35,6 +53,10 @@ export default function Auth() {
           password,
         });
         if (error) throw error;
+
+        // Trigger the Hugging Face warm-up
+        warmUpHuggingFace();
+
         navigate("/");
       }
     } catch (error) {
