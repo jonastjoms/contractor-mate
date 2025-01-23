@@ -1,4 +1,9 @@
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Link } from "react-router-dom";
 
 interface ProjectCardProps {
@@ -8,7 +13,12 @@ interface ProjectCardProps {
   date: string;
 }
 
-export function ProjectCard({ id, title, description, date }: ProjectCardProps) {
+export function ProjectCard({
+  id,
+  title,
+  description,
+  date,
+}: ProjectCardProps) {
   return (
     <Link to={`/project/${id}`}>
       <Card className="hover:shadow-lg transition-shadow">

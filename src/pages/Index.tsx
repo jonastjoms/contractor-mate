@@ -59,8 +59,8 @@ export default function Index() {
         .from("projects")
         .insert([
           {
-            title: "New Project",
-            description: "Click to edit project details",
+            title: "Nytt prosjekt",
+            description: "Trykk her for å endre prosjektbeskrivelsen",
             user_id: user.id, // Add the user_id field
           },
         ])
@@ -104,7 +104,7 @@ export default function Index() {
         <h1 className="text-3xl font-bold">Projects</h1>
         <div className="flex gap-4">
           <Button onClick={() => createProject.mutate()}>
-            <Plus className="mr-2 h-4 w-4" /> New Project
+            <Plus className="mr-2 h-4 w-4" /> Nytt prosjekt
           </Button>
         </div>
       </div>
@@ -112,7 +112,7 @@ export default function Index() {
       <div className="relative mb-6">
         <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
         <Input
-          placeholder="Search projects..."
+          placeholder="Søk etter prosjekter..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -120,7 +120,7 @@ export default function Index() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8">Loading projects...</div>
+        <div className="text-center py-8">Laster prosjekter</div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => (
