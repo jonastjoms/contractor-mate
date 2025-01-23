@@ -358,10 +358,10 @@ export default function Project() {
 
         <Tabs defaultValue="recordings">
           <TabsList>
-            <TabsTrigger value="recordings">Recordings</TabsTrigger>
-            <TabsTrigger value="tasks">Tasks</TabsTrigger>
-            <TabsTrigger value="materials">Materials</TabsTrigger>
-            <TabsTrigger value="offer">Offer</TabsTrigger>
+            <TabsTrigger value="recordings">Opptak</TabsTrigger>
+            <TabsTrigger value="tasks">Oppgaver</TabsTrigger>
+            <TabsTrigger value="materials">Materialer</TabsTrigger>
+            <TabsTrigger value="offer">Tilbud</TabsTrigger>
           </TabsList>
 
           <TabsContent value="recordings">
