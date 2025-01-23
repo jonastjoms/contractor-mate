@@ -10,6 +10,7 @@ import { Pencil, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { generateOfferPDF } from "@/lib/generateOfferPdf";
 
 interface Recording {
   id: string;
@@ -152,8 +153,8 @@ export default function Project() {
   const handleManualGeneration = async (recordingId: string) => {
     try {
       toast({
-        title: "Processing",
-        description: "Generating tasks, materials, and offer...",
+        title: "Prosesserer",
+        description: "Generer oppgaver, materialliste og tilbud...",
       });
 
       const { error: processError } = await supabase.functions.invoke(
@@ -180,7 +181,7 @@ export default function Project() {
 
       toast({
         title: "Processing complete",
-        description: "Tasks, materials, and offer have been generated.",
+        description: "Oppgaver, materialliste og tilbud generert.",
       });
     } catch (error) {
       console.error("Processing error:", error);
@@ -242,6 +243,31 @@ export default function Project() {
     }
   };
 
+  const handleDownloadPDF = async () => {
+    if (!offer) {
+      toast({
+        title: "No offer available",
+        description: "Please generate an offer before downloading.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await generateOfferPDF(offer, "offer-content");
+      toast({
+        title: "Download Success",
+        description: "Offer downloaded as PDF.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex flex-col gap-2 mb-8">
@@ -252,7 +278,7 @@ export default function Project() {
               value={projectTitle}
               onChange={(e) => setProjectTitle(e.target.value)}
               className="text-3xl font-bold h-12"
-              placeholder="Project Title"
+              placeholder="Prosjektnavn"
             />
             <Button variant="outline" size="icon" onClick={handleTitleSave}>
               <Check className="h-4 w-4" />
@@ -261,7 +287,7 @@ export default function Project() {
         ) : (
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold">
-              {project?.title || "Project Details"}
+              {project?.title || "Prosjektnavn"}
             </h1>
             <Button
               variant="ghost"
@@ -279,7 +305,7 @@ export default function Project() {
             <textarea
               value={projectDescription ?? ""}
               onChange={(e) => setProjectDescription(e.target.value)}
-              placeholder="Project Description"
+              placeholder="Prosjektbeskrivelse"
               rows={4}
               className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring focus:ring-blue-500 focus:border-blue-500"
             />
@@ -323,22 +349,22 @@ export default function Project() {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Upload Recording</CardTitle>
+            <CardTitle>Last opp opptak</CardTitle>
           </CardHeader>
           <CardContent>
             <DropZone projectId={id!} onFileAccepted={handleFileAccepted} />
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="recordings">
+        <Tabs defaultValue="Opptak">
           <TabsList>
-            <TabsTrigger value="recordings">Recordings</TabsTrigger>
-            <TabsTrigger value="tasks">Tasks</TabsTrigger>
-            <TabsTrigger value="materials">Materials</TabsTrigger>
-            <TabsTrigger value="offer">Offer</TabsTrigger>
+            <TabsTrigger value="Opptak">Opptak</TabsTrigger>
+            <TabsTrigger value="oppgaver">Oppgaver</TabsTrigger>
+            <TabsTrigger value="materialer">Materialer</TabsTrigger>
+            <TabsTrigger value="tilbud">Tilbud</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="recordings">
+          <TabsContent value="Opptak">
             <Card>
               <CardContent className="pt-6">
                 <RecordingList
@@ -351,7 +377,7 @@ export default function Project() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="tasks">
+          <TabsContent value="Oppgaver">
             <Card>
               <CardContent className="pt-6">
                 {tasks?.length ? (
@@ -379,7 +405,7 @@ export default function Project() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="materials">
+          <TabsContent value="Materialer">
             <Card>
               <CardContent className="pt-6">
                 {materials?.length ? (
@@ -411,23 +437,21 @@ export default function Project() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="offer">
+          <TabsContent value="Tilbud">
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="pt-6" id="offer-content">
                 {offer ? (
                   <div className="space-y-6">
                     <div>
                       <h2 className="text-xl font-semibold">{offer.title}</h2>
                       <p className="text-gray-600 mt-2">{offer.summary}</p>
                     </div>
-
                     <div>
                       <h3 className="font-medium mb-2">Progress Plan</h3>
                       <p className="text-sm text-gray-600">
                         {offer.progress_plan}
                       </p>
                     </div>
-
                     <div className="border-t pt-4">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Total Price</span>
@@ -443,6 +467,13 @@ export default function Project() {
                   </p>
                 )}
               </CardContent>
+              {offer && (
+                <div className="mt-4 flex justify-end">
+                  <Button onClick={handleDownloadPDF} variant="outline">
+                    Last ned
+                  </Button>
+                </div>
+              )}
             </Card>
           </TabsContent>
         </Tabs>
