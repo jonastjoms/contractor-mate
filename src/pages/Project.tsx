@@ -468,7 +468,7 @@ export default function Project() {
                 )}
               </CardContent>
               {offer && (
-                <div className="mt-4 flex justify-end">
+                <div className="m-4 flex justify-end">
                   <Button onClick={handleDownloadPDF} variant="outline">
                     Last ned
                   </Button>
