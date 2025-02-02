@@ -11,168 +11,214 @@ export type Database = {
     Tables: {
       materials: {
         Row: {
-          id: string
-          title: string
-          description: string | null
           amount: number
-          project_id: string
           created_at: string
+          description: string | null
+          id: string
+          project_id: string
+          title: string
           updated_at: string
         }
         Insert: {
-          id?: string
-          title: string
-          description?: string | null
           amount: number
-          project_id: string
           created_at?: string
+          description?: string | null
+          id?: string
+          project_id: string
+          title: string
           updated_at?: string
         }
         Update: {
-          id?: string
-          title?: string
-          description?: string | null
           amount?: number
-          project_id?: string
           created_at?: string
+          description?: string | null
+          id?: string
+          project_id?: string
+          title?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "materials_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       offers: {
         Row: {
-          id: string
-          title: string
-          summary: string | null
-          progress_plan: string | null
-          total_price: number
-          project_id: string
           created_at: string
+          id: string
+          progress_plan: string | null
+          project_id: string
+          summary: string | null
+          title: string
+          total_price: number
           updated_at: string
         }
         Insert: {
-          id?: string
-          title: string
-          summary?: string | null
-          progress_plan?: string | null
-          total_price: number
-          project_id: string
           created_at?: string
+          id?: string
+          progress_plan?: string | null
+          project_id: string
+          summary?: string | null
+          title: string
+          total_price: number
           updated_at?: string
         }
         Update: {
-          id?: string
-          title?: string
-          summary?: string | null
-          progress_plan?: string | null
-          total_price?: number
-          project_id?: string
           created_at?: string
+          id?: string
+          progress_plan?: string | null
+          project_id?: string
+          summary?: string | null
+          title?: string
+          total_price?: number
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "offers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
-          id: string
-          full_name: string | null
           created_at: string
+          full_name: string | null
+          id: string
           updated_at: string
         }
         Insert: {
-          id: string
-          full_name?: string | null
           created_at?: string
+          full_name?: string | null
+          id: string
           updated_at?: string
         }
         Update: {
-          id?: string
-          full_name?: string | null
           created_at?: string
+          full_name?: string | null
+          id?: string
           updated_at?: string
         }
+        Relationships: []
       }
       projects: {
         Row: {
+          created_at: string
+          description: string | null
           id: string
           title: string
-          description: string | null
-          user_id: string
-          created_at: string
           updated_at: string
+          user_id: string
         }
         Insert: {
+          created_at?: string
+          description?: string | null
           id?: string
           title: string
-          description?: string | null
-          user_id: string
-          created_at?: string
           updated_at?: string
+          user_id: string
         }
         Update: {
+          created_at?: string
+          description?: string | null
           id?: string
           title?: string
-          description?: string | null
-          user_id?: string
-          created_at?: string
           updated_at?: string
+          user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "projects_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recordings: {
         Row: {
-          id: string
-          file_path: string
-          transcript: string | null
-          status: string
-          project_id: string
           created_at: string
+          file_path: string
+          id: string
+          project_id: string
+          status: string
+          transcript: string | null
           updated_at: string
         }
         Insert: {
-          id?: string
-          file_path: string
-          transcript?: string | null
-          status?: string
-          project_id: string
           created_at?: string
+          file_path: string
+          id?: string
+          project_id: string
+          status?: string
+          transcript?: string | null
           updated_at?: string
         }
         Update: {
-          id?: string
-          file_path?: string
-          transcript?: string | null
-          status?: string
-          project_id?: string
           created_at?: string
+          file_path?: string
+          id?: string
+          project_id?: string
+          status?: string
+          transcript?: string | null
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "recordings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
-          id: string
-          title: string
-          description: string | null
           assignee: string | null
-          project_id: string
           created_at: string
+          description: string | null
+          id: string
+          project_id: string
+          title: string
           updated_at: string
         }
         Insert: {
-          id?: string
-          title: string
-          description?: string | null
           assignee?: string | null
-          project_id: string
           created_at?: string
+          description?: string | null
+          id?: string
+          project_id: string
+          title: string
           updated_at?: string
         }
         Update: {
-          id?: string
-          title?: string
-          description?: string | null
           assignee?: string | null
-          project_id?: string
           created_at?: string
+          description?: string | null
+          id?: string
+          project_id?: string
+          title?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -23,13 +24,11 @@ serve(async (req) => {
 
     console.log("Processing recording:", recording_id);
 
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Get recording details
     const { data: recording, error: recordingError } = await supabaseClient
       .from("recordings")
       .select("*")
@@ -43,7 +42,6 @@ serve(async (req) => {
 
     console.log("Found recording:", recording.file_path);
 
-    // Download the audio file from storage
     const { data: fileData, error: downloadError } =
       await supabaseClient.storage.from("audio").download(recording.file_path);
 
@@ -54,13 +52,11 @@ serve(async (req) => {
 
     console.log("Successfully downloaded audio file");
 
-    // Convert audio file to ArrayBuffer
     const audioBuffer = await fileData.arrayBuffer();
     console.log("Audio buffer size:", audioBuffer.byteLength);
 
-    // Implement retry logic for Hugging Face API calls
     const maxRetries = 3;
-    const baseDelay = 2000; // Start with 1 second delay
+    const baseDelay = 2000;
     let attempt = 0;
     let lastError = null;
 
@@ -87,8 +83,7 @@ serve(async (req) => {
           console.error("Hugging Face API error:", response.status, errorText);
 
           if (response.status === 503) {
-            // Service unavailable - implement exponential backoff
-            const delay = Math.min(baseDelay * Math.pow(2, attempt), 10000); // Cap at 10 seconds
+            const delay = Math.min(baseDelay * Math.pow(2, attempt), 10000);
             console.log(`Service unavailable, retrying in ${delay}ms...`);
             await new Promise((resolve) => setTimeout(resolve, delay));
             attempt++;
@@ -106,7 +101,6 @@ serve(async (req) => {
         const result = await response.json();
         console.log("Transcription result:", result);
 
-        // Update the recording with the transcription
         const { error: updateError } = await supabaseClient
           .from("recordings")
           .update({
@@ -139,10 +133,7 @@ serve(async (req) => {
       }
     }
 
-    // If we get here, all attempts failed
-    throw (
-      lastError || new Error("Failed to transcribe after multiple attempts")
-    );
+    throw lastError || new Error("Failed to transcribe after multiple attempts");
   } catch (error) {
     console.error("Function error:", error);
     return new Response(

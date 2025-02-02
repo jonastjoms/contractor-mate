@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -22,13 +23,11 @@ serve(async (req) => {
 
     console.log("Processing recording:", recording_id);
 
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Get recording with transcript
     const { data: recording, error: recordingError } = await supabaseClient
       .from("recordings")
       .select("*")
@@ -46,7 +45,6 @@ serve(async (req) => {
 
     console.log("Processing transcript:", recording.transcript);
 
-    // Call OpenAI API to analyze transcript
     const openAIResponse = await fetch(
       "https://api.openai.com/v1/chat/completions",
       {
@@ -90,7 +88,6 @@ serve(async (req) => {
       const errorText = await openAIResponse.text();
       console.error("OpenAI API error:", openAIResponse.status, errorText);
 
-      // Check for specific error types
       const errorJson = JSON.parse(errorText);
       if (errorJson.error?.code === "insufficient_quota") {
         throw new Error(
@@ -106,7 +103,6 @@ serve(async (req) => {
     const aiResult = await openAIResponse.json();
     console.log("Raw AI response:", aiResult.choices[0].message.content);
 
-    // Ensure we're parsing valid JSON
     let analysis;
     try {
       analysis = JSON.parse(aiResult.choices[0].message.content.trim());
@@ -121,12 +117,10 @@ serve(async (req) => {
 
     console.log("Parsed AI Analysis:", analysis);
 
-    // Validate the analysis structure and data types
     if (!analysis.tasks || !analysis.materials || !analysis.offer) {
       throw new Error("AI response missing required fields");
     }
 
-    // Validate offer total_price
     if (
       !analysis.offer.total_price ||
       typeof analysis.offer.total_price !== "number" ||
@@ -136,7 +130,6 @@ serve(async (req) => {
       throw new Error("Offer total_price must be a positive number");
     }
 
-    // Start a transaction to insert all the data
     const { error: transactionError } = await supabaseClient.rpc(
       "process_recording_results",
       {

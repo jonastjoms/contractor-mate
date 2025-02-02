@@ -39,7 +39,7 @@ export function ProjectCard({
       });
 
       if (onDelete) {
-        onDelete(id); // Notify the parent to refetch the project list
+        onDelete(id);
       }
     } catch (error: any) {
       console.error("Error deleting project:", error);
@@ -66,8 +66,8 @@ export function ProjectCard({
           size="sm"
           className="absolute top-2 right-2"
           onClick={(e) => {
-            e.stopPropagation(); // Prevent the Link from being triggered
-            handleDelete(id); // Call the delete handler
+            e.stopPropagation();
+            handleDelete();
           }}
           title="Slett"
         >

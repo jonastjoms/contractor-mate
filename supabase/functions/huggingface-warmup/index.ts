@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -17,9 +18,9 @@ serve(async (req) => {
     const response = await fetch(
       "https://kelhfabjfneinfr9.us-east-1.aws.endpoints.huggingface.cloud",
       {
-        method: "GET", // Simple GET request for warm-up
+        method: "GET",
         headers: {
-          Authorization: `Bearer ${Deno.env.get("HUGGINGFACE_API_KEY")}`, // API key from environment variable
+          Authorization: `Bearer ${Deno.env.get("HUGGINGFACE_API_KEY")}`,
         },
       }
     );
