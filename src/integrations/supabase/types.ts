@@ -9,13 +9,186 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      materials: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          amount: number
+          project_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          amount: number
+          project_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          amount?: number
+          project_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      offers: {
+        Row: {
+          id: string
+          title: string
+          summary: string | null
+          progress_plan: string | null
+          total_price: number
+          project_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          summary?: string | null
+          progress_plan?: string | null
+          total_price: number
+          project_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          summary?: string | null
+          progress_plan?: string | null
+          total_price?: number
+          project_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      profiles: {
+        Row: {
+          id: string
+          full_name: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          full_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          full_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      projects: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          user_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          user_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          user_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      recordings: {
+        Row: {
+          id: string
+          file_path: string
+          transcript: string | null
+          status: string
+          project_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          file_path: string
+          transcript?: string | null
+          status?: string
+          project_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          file_path?: string
+          transcript?: string | null
+          status?: string
+          project_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      tasks: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          assignee: string | null
+          project_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          assignee?: string | null
+          project_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          assignee?: string | null
+          project_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      process_recording_results: {
+        Args: {
+          p_recording_id: string
+          p_project_id: string
+          p_tasks: Json
+          p_materials: Json
+          p_offer: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
