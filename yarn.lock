@@ -2535,16 +2535,6 @@ loose-envify@^1.0.0, loose-envify@^1.1.0, loose-envify@^1.4.0:
   dependencies:
     js-tokens "^3.0.0 || ^4.0.0"
 
-lovable-tagger@^1.0.19:
-  version "1.0.19"
-  resolved "https://registry.npmjs.org/lovable-tagger/-/lovable-tagger-1.0.19.tgz"
-  integrity sha512-G2Oa2QItJ8X+7hMQcdWL3r4faKBE5DU/aQZEwpVJyVfOs/4gBi4ScGhqVxm7abRrMHj7pf7h+8VQfxBLTiLbLQ==
-  dependencies:
-    "@babel/parser" "^7.25.9"
-    "@babel/types" "^7.25.8"
-    estree-walker "^3.0.3"
-    magic-string "^0.30.12"
-
 lru-cache@^10.2.0:
   version "10.4.3"
   resolved "https://registry.npmjs.org/lru-cache/-/lru-cache-10.4.3.tgz"
